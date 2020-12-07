@@ -128,22 +128,28 @@ export class Tools {
 
     public getSleepingTasks(): Promise<Array<number>> {
         return new Promise((resolve, reject) => {
-            const sql = `SELECT id FROM information_schema.processlist WHERE user='admin' AND Command = 'Sleep' AND time > 600`;
+            const sql = `SELECT id FROM information_schema.processlist WHERE user='admin' AND Command = 'Sleep' AND time > 600 ORDER BY time DESC`;
             this.pool.getConnection((err, connection) => {
                 if (err) {
                     throw new Error(err);
                 }
                 connection.query(sql, [], (error, results) => {
+                    connection.release();
                     if (error) {
                         console.log(error, sql);
                         throw new Error(error);
-                    }
+                    }                    
                     const ids = [];
-                    for (let r of results) {
-                        ids.push(r['id']);
+                    if (results.length >= 10) {
+                        for (let i = 0; i < 10; i++) {
+                            ids.push(results[i]['id']);   
+                        }
                     }
+                    /* for (let r of results) {
+                        ids.push(r['id']);
+                    } */
                     resolve(ids);
-                    connection.release();
+                    
                 });
             });
         });
